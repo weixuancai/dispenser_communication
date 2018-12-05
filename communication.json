@@ -196,7 +196,14 @@
         "Password":"Admin0000",
         "Number":21,
         "Building":"RB"
+    },
+    {
+        "Device_ID":"GYM_02_01",
+        "IP":"140.118.34.241",
+        "Mac":"00:26:47:12:76:D2",
+        "Account":"Admin",
+        "Password":"Admin0000",
+        "Number":22,
+        "Building":"GYM"
     }
 ]
-
-
