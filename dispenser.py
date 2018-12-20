@@ -62,71 +62,147 @@ def run():
             status = 1
             hardware = 'PCB'
             device_id = i[u'Device_ID']
-            mac_address = i[u'Mac']
-            #Time
-            time_string = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            time_stamp = int(round(time.time() * 1000))
-            #Status
-            hottemp = int(soup.find(attrs={'name':'textfield[0]'}).attrs['value'])
-            warmtemp = int(soup.find(attrs={'name':'textfield[1]'}).attrs['value'])
-            coldtemp = int(soup.find(attrs={'name':'textfield[2]'}).attrs['value'])
-            HotTemp_Insulation = int(soup.find(attrs={'name':'textfield[3]'}).attrs['value'])
-            WarmTemp_Insulation = int(soup.find(attrs={'name':'textfield[4]'}).attrs['value'])
-            ColdTemp_Insulation = int(soup.find(attrs={'name':'textfield[5]'}).attrs['value'])
-            TDS = int(soup.find(attrs={'name':'textfield[8]'}).attrs['value'])
-            ErrorCode = int(soup.find(attrs={'name':'textfield[7]'}).attrs['value'])
-            #Flag
-            SavingPower = int(soup.find('input',attrs={'name':'lights1'}).has_attr('checked'))
-            Sterilizing = int(soup.find('input',attrs={'name':'lights3'}).has_attr('checked'))
-            Heating = int(soupp.find('input',attrs={'name':'lights13'}).has_attr('checked'))
-            Cooling = int(soupp.find('input',attrs={'name':'lights14'}).has_attr('checked'))
-            HighLevel = unicode(int(soupp.find('input',attrs={'name':'lights10'}).has_attr('checked')))
-            MidLevel = unicode(int(soupp.find('input',attrs={'name':'lights11'}).has_attr('checked')))
-            LowLevel = unicode(int(soupp.find('input',attrs={'name':'lights12'}).has_attr('checked')))
+##Filter device 
+            if(device_id == 'EE_06_01'):
+                mac_address = i[u'Mac']
+                #Time
+                time_string = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                time_stamp = int(round(time.time() * 1000))
+                #Status
+                hottemp = int(soup.find(attrs={'name':'textfield[0]'}).attrs['value'])
+                warmtemp = int(soup.find(attrs={'name':'textfield[1]'}).attrs['value'])
+                coldtemp = int(soup.find(attrs={'name':'textfield[2]'}).attrs['value'])
+                HotTemp_Insulation = int(soup.find(attrs={'name':'textfield[3]'}).attrs['value'])
+                WarmTemp_Insulation = int(soup.find(attrs={'name':'textfield[4]'}).attrs['value'])
+                ColdTemp_Insulation = int(soup.find(attrs={'name':'textfield[5]'}).attrs['value'])
+                TDS = int(soup.find(attrs={'name':'textfield[8]'}).attrs['value'])
+                ErrorCode = int(soup.find(attrs={'name':'textfield[7]'}).attrs['value'])
+                #Flag
+                SavingPower = int(soup.find('input',attrs={'name':'lights1'}).has_attr('checked'))
+                Sterilizing = int(soup.find('input',attrs={'name':'lights3'}).has_attr('checked'))
+                Heating = int(soupp.find('input',attrs={'name':'lights13'}).has_attr('checked'))
+                Cooling = int(soupp.find('input',attrs={'name':'lights14'}).has_attr('checked'))
+                HighLevel = unicode(int(soupp.find('input',attrs={'name':'lights10'}).has_attr('checked')))
+                MidLevel = unicode(int(soupp.find('input',attrs={'name':'lights11'}).has_attr('checked')))
+                LowLevel = unicode(int(soupp.find('input',attrs={'name':'lights12'}).has_attr('checked')))
 
 
-            AllLevel = int(HighLevel) + int(MidLevel) + int(LowLevel)
-            if AllLevel == 3:
-                WaterLevel = 22
-            elif AllLevel == 2:
-                WaterLevel = 15
+                AllLevel = int(HighLevel) + int(MidLevel) + int(LowLevel)
+                if AllLevel == 3:
+                    WaterLevel = 22
+                elif AllLevel == 2:
+                    WaterLevel = 15
+                else:
+                    WaterLevel = 10
+                
+                InputWater = int(soupp.find('input',attrs={'name':'lights15'}).has_attr('checked'))
+                HotOutput = int(soupp.find('input',attrs={'name':'lights16'}).has_attr('checked'))
+                WarmOutput = int(soupp.find('input',attrs={'name':'lights17'}).has_attr('checked'))
+                ColdOutput = int(soupp.find('input',attrs={'name':'lights18'}).has_attr('checked'))
+                #Filter
+                Filter_Usage = int(soupp.find(attrs={'name':'textfield[11]'}).attrs['value'])
+                Filter_Hint = int(soupp.find('input',attrs={'name':'lights19'}).has_attr('checked'))
+
+                data = {"UploadTime": time_string,
+                "Mac_Address":mac_address,
+                "Status":status,
+                "Hardware":hardware,
+                "TimeStamp":time_stamp,
+                "Device_ID":device_id,
+                "HotTemp":hottemp,
+                "WarmTemp":warmtemp,
+                "ColdTemp":coldtemp,
+                "Heating":Heating,
+                "Cooling":Cooling,
+                "Refilling":InputWater,
+                "WaterLevel":WaterLevel,
+                "TDS":TDS,
+                "Hot_Valve":HotOutput,
+                "Warm_Valve":WarmOutput,
+                "Cold_Valve":ColdOutput,
+                "SavingPower":SavingPower,
+                "Sterilizing":Sterilizing,
+                "ErrorCode":ErrorCode,
+                "HotTemp_Insulation":HotTemp_Insulation,
+                "WarmTemp_Insulation":WarmTemp_Insulation,
+                "ColdTemp_Insulation":ColdTemp_Insulation,
+                "Filter_Usage":Filter_Usage,
+                "Filter_Hint":Filter_Hint
+                }
+                # j_data = json.dumps(data)
+                print "         |",time_string,"|"
+                # print data
+                conn_mongo(i[u'Building'],data)
+                post(data)
+                print "========================================================================"
+##Non Filter            
             else:
-                WaterLevel = 10
+                mac_address = i[u'Mac']
+                #Time
+                time_string = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                time_stamp = int(round(time.time() * 1000))
+                #Status
+                hottemp = int(soup.find(attrs={'name':'textfield[0]'}).attrs['value'])
+                warmtemp = int(soup.find(attrs={'name':'textfield[1]'}).attrs['value'])
+                coldtemp = int(soup.find(attrs={'name':'textfield[2]'}).attrs['value'])
+                HotTemp_Insulation = int(soup.find(attrs={'name':'textfield[3]'}).attrs['value'])
+                WarmTemp_Insulation = int(soup.find(attrs={'name':'textfield[4]'}).attrs['value'])
+                ColdTemp_Insulation = int(soup.find(attrs={'name':'textfield[5]'}).attrs['value'])
+                TDS = int(soup.find(attrs={'name':'textfield[8]'}).attrs['value'])
+                ErrorCode = int(soup.find(attrs={'name':'textfield[7]'}).attrs['value'])
+                #Flag
+                SavingPower = int(soup.find('input',attrs={'name':'lights1'}).has_attr('checked'))
+                Sterilizing = int(soup.find('input',attrs={'name':'lights3'}).has_attr('checked'))
+                Heating = int(soupp.find('input',attrs={'name':'lights13'}).has_attr('checked'))
+                Cooling = int(soupp.find('input',attrs={'name':'lights14'}).has_attr('checked'))
+                HighLevel = unicode(int(soupp.find('input',attrs={'name':'lights10'}).has_attr('checked')))
+                MidLevel = unicode(int(soupp.find('input',attrs={'name':'lights11'}).has_attr('checked')))
+                LowLevel = unicode(int(soupp.find('input',attrs={'name':'lights12'}).has_attr('checked')))
 
-            InputWater = int(soupp.find('input',attrs={'name':'lights15'}).has_attr('checked'))
-            HotOutput = int(soupp.find('input',attrs={'name':'lights16'}).has_attr('checked'))
-            WarmOutput = int(soupp.find('input',attrs={'name':'lights17'}).has_attr('checked'))
-            ColdOutput = int(soupp.find('input',attrs={'name':'lights18'}).has_attr('checked'))
 
-            data = {"UploadTime": time_string,
-            "Mac_Address":mac_address,
-            "Status":status,
-            "Hardware":hardware,
-            "TimeStamp":time_stamp,
-            "Device_ID":device_id,
-            "HotTemp":hottemp,
-            "WarmTemp":warmtemp,
-            "ColdTemp":coldtemp,
-            "Heating":Heating,
-            "Cooling":Cooling,
-            "Refilling":InputWater,
-            "WaterLevel":WaterLevel,
-            "TDS":TDS,
-            "Hot_Valve":HotOutput,
-            "Warm_Valve":WarmOutput,
-            "Cold_Valve":ColdOutput,
-            "SavingPower":SavingPower,
-            "Sterilizing":Sterilizing,
-            "ErrorCode":ErrorCode,
-            "HotTemp_Insulation":HotTemp_Insulation,
-            "WarmTemp_Insulation":WarmTemp_Insulation,
-            "ColdTemp_Insulation":ColdTemp_Insulation
-            }
-            # j_data = json.dumps(data)
-            print "         |",time_string,"|"
-            conn_mongo(i[u'Building'],data)
-            post(data)
-            print "========================================================================"
+                AllLevel = int(HighLevel) + int(MidLevel) + int(LowLevel)
+                if AllLevel == 3:
+                    WaterLevel = 22
+                elif AllLevel == 2:
+                    WaterLevel = 15
+                else:
+                    WaterLevel = 10
+                
+                InputWater = int(soupp.find('input',attrs={'name':'lights15'}).has_attr('checked'))
+                HotOutput = int(soupp.find('input',attrs={'name':'lights16'}).has_attr('checked'))
+                WarmOutput = int(soupp.find('input',attrs={'name':'lights17'}).has_attr('checked'))
+                ColdOutput = int(soupp.find('input',attrs={'name':'lights18'}).has_attr('checked'))
+
+                data = {"UploadTime": time_string,
+                "Mac_Address":mac_address,
+                "Status":status,
+                "Hardware":hardware,
+                "TimeStamp":time_stamp,
+                "Device_ID":device_id,
+                "HotTemp":hottemp,
+                "WarmTemp":warmtemp,
+                "ColdTemp":coldtemp,
+                "Heating":Heating,
+                "Cooling":Cooling,
+                "Refilling":InputWater,
+                "WaterLevel":WaterLevel,
+                "TDS":TDS,
+                "Hot_Valve":HotOutput,
+                "Warm_Valve":WarmOutput,
+                "Cold_Valve":ColdOutput,
+                "SavingPower":SavingPower,
+                "Sterilizing":Sterilizing,
+                "ErrorCode":ErrorCode,
+                "HotTemp_Insulation":HotTemp_Insulation,
+                "WarmTemp_Insulation":WarmTemp_Insulation,
+                "ColdTemp_Insulation":ColdTemp_Insulation
+                }
+                # j_data = json.dumps(data)
+                print "         |",time_string,"|"
+                conn_mongo(i[u'Building'],data)
+                post(data)
+                print device_id
+                print "========================================================================"
 
 def get(device_id):
     # print "get"
@@ -186,6 +262,9 @@ def post(data):
     except Exception as err_login:
         logging.error("LOGIN")
         logging.error(err_login,exc_info=True)
+
+def filter_data(i,soup,soupp):
+    print "s"
 
 def conn_mongo(collection_name,data):
     url = "mongodb://140.118.123.95"
