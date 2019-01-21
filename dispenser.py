@@ -1,9 +1,3 @@
-# import Configparser as cf
-
-# config = cf.ConfigParser()
-# # print config['EE_06_01']
-# config.readfp(open('communication.conf'))
-
 import time,datetime
 
 import pymongo
@@ -18,9 +12,9 @@ from requests.auth import HTTPBasicAuth
 
 import logging
 
-with open('communication.json') as json_data_file:
+with open('communication_2.json') as json_data_file:
     conf = json.load(json_data_file)
-logging.basicConfig(filename='logfile.log',format='%(asctime)s - %(message)s',level=logging.ERROR)
+logging.basicConfig(filename='logfile_0117.log',format='%(asctime)s - %(message)s',level=logging.ERROR)
 
 #API SERVER
 login_api = 'https://smartcampus.et.ntust.edu.tw:5417/v1/login'
@@ -28,6 +22,13 @@ login_body={'username':'sc_user001',
             'password':'dispenser'}
 get_api = 'https://smartcampus.et.ntust.edu.tw:5417/v1/dispenser/rawdata?Device_ID='
 destination = 'https://smartcampus.et.ntust.edu.tw:5417/v1/smartcampus/dispenser/rawdata'
+
+login_api2 = 'https://dev-bmw-lab.et.ntust.edu.tw:5417/login'
+login_body2={'username':'sc_user001',
+            'password':'dispenser'}
+
+destination2 = 'https://dev-bmw-lab.et.ntust.edu.tw:5417/smartcampus/dispenser/rawdata'
+
 timeout_counter = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 def run():
@@ -37,8 +38,8 @@ def run():
             page1 = 'http://' + i[u'IP'] + '/protect/home.htm'
             page2 = 'http://' + i[u'IP'] + '/protect/index2.htm'
             Auth = HTTPBasicAuth(i[u'Account'],i[u'Password'])
-            res = requests.get(page1, auth=Auth,timeout=5)
-            res_2 = requests.get(page2, auth=Auth,timeout=5)
+            res = requests.get(page1, auth=Auth,timeout=3)
+            res_2 = requests.get(page2, auth=Auth,timeout=3)
             soup = BeautifulSoup(res.text,'html.parser')
             soupp = BeautifulSoup(res_2.text,'html.parser')
 
@@ -46,11 +47,15 @@ def run():
             logging.error("Timeout occurred : " + i[u'Device_ID'],exc_info = True)
             timeout_counter[i[u'Number']] = timeout_counter[i[u'Number']] + 1
             # print timeout_counter
+
             if(timeout_counter[i[u'Number']] > 4):
+                print "         |","Timeout","|"
                 data = get(i[u'Device_ID'])
                 conn_mongo(i[u'Building'],data)
                 post(data)
+                post2(data)
                 timeout_counter[i[u'Number']] = 0
+                print "========================================================================"
     
         except Exception as e:
             device_id = i[u'Device_ID']
@@ -58,11 +63,12 @@ def run():
             data = get(device_id)
             conn_mongo(i[u'Building'],data)
             post(data)
+            post2(data)
         else:
             status = 1
             hardware = 'PCB'
             device_id = i[u'Device_ID']
-##Filter device 
+            ##Filter device 
             if(device_id == 'EE_06_01'):
                 mac_address = i[u'Mac']
                 #Time
@@ -105,7 +111,7 @@ def run():
 
                 data = {"UploadTime": time_string,
                 "Mac_Address":mac_address,
-                "Status":status,
+                "Status":1,
                 "Hardware":hardware,
                 "TimeStamp":time_stamp,
                 "Device_ID":device_id,
@@ -134,8 +140,9 @@ def run():
                 # print data
                 conn_mongo(i[u'Building'],data)
                 post(data)
+                post2(data)
                 print "========================================================================"
-##Non Filter            
+            ##Non Filter            
             else:
                 mac_address = i[u'Mac']
                 #Time
@@ -175,7 +182,7 @@ def run():
 
                 data = {"UploadTime": time_string,
                 "Mac_Address":mac_address,
-                "Status":status,
+                "Status":1,
                 "Hardware":hardware,
                 "TimeStamp":time_stamp,
                 "Device_ID":device_id,
@@ -201,7 +208,8 @@ def run():
                 print "         |",time_string,"|"
                 conn_mongo(i[u'Building'],data)
                 post(data)
-                print device_id
+                post2(data)
+                # print device_id
                 print "========================================================================"
 
 def get(device_id):
@@ -249,7 +257,7 @@ def post(data):
         token = response_login.json()[u'token']
         requests_god_headers = {"Authorization":token,
                                 "Content-Type":"application/json"}
-        
+
         try:
             # Post to GodServer
             response_god = requests.post(destination, data=j_data,headers=requests_god_headers)
@@ -263,8 +271,28 @@ def post(data):
         logging.error("LOGIN")
         logging.error(err_login,exc_info=True)
 
-def filter_data(i,soup,soupp):
-    print "s"
+def post2(data):
+    j_data = json.dumps(data)
+    try:
+        response_login2 = requests.post(login_api2, data=json.dumps(login_body2))
+        # print response_login2.status_code
+        token2 = response_login2.json()[u'token']
+        requests_god_headers2 = {"Authorization":token2,
+                                "Content-Type":"application/json"}
+        # print requests_god_headers2
+        try:
+            # Post to GodServer
+            response_lab = requests.post(destination2, data=j_data,headers=requests_god_headers2)
+        except Exception as err_post:
+            logging.error("POST")
+            logging.error(j_data)
+            logging.error(err_post,exc_info=True)
+        else:
+            print data[u'Device_ID'],"| LAB SERVER | Status = ",response_lab.status_code
+    except Exception as err_login:
+        logging.error("LOGIN")
+        logging.error(err_login,exc_info=True)
+
 
 def conn_mongo(collection_name,data):
     url = "mongodb://140.118.123.95"
